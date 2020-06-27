@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t ferminhg/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run ferminhg/react-test npm test -- --watchAll=false
+
+after_success:
+    - docker build -t ferminhg/multi-client ./client
+    - docker build -t ferminhg/multi-nginx ./nginx
+    - docker build -t ferminhg/multi-server ./server
+    - docker build -t ferminhg/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # take those images and push them to docker hub
+    - docker push ferminhg/multi-client
+    - docker push ferminhg/multi-nginx
+    - docker push ferminhg/multi-server
+    - docker push ferminhg/multi-worker
